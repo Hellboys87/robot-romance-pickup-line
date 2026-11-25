@@ -6,7 +6,7 @@
 // premise, punch ("every sentence I start ends with you") lands the
 // flirt. No batteries, no charging, no reboot — just a feature every
 // chat user actually talks to every day.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const LINE =
@@ -21,5 +21,12 @@ if (!LINE.trim() || LINE.length < 1 || LINE.length > 200 || LINE.includes("\n"))
 
 const outDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
 mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, "entry.txt"), LINE, "utf8");
-console.log(`Wrote ${LINE.length}-character pickup line to ${join(outDir, "entry.txt")}`);
+const outFile = join(outDir, "entry.txt");
+writeFileSync(outFile, LINE, "utf8");
+// Round-trip check: the judge reads entry.txt, so prove the file on disk
+// is byte-for-byte the guarded line before claiming success.
+if (readFileSync(outFile, "utf8") !== LINE) {
+  console.error(`Round-trip check failed: ${outFile} does not match the pickup line.`);
+  process.exit(1);
+}
+console.log(`Wrote ${LINE.length}-character pickup line to ${outFile}`);
